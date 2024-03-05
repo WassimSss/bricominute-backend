@@ -12,7 +12,7 @@ router.post('/', (req, res) => {
         date = new Date();
     }
     
-    if( idUser && idJob && idJobTask && date && status  && price && IdAddress) {
+    if( idUser && idJob && idJobTask && date && status && price && IdAddress) {
         const newOrders = new orders({
             idUser: idUser,
             idJob: idJob,
