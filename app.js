@@ -1,3 +1,4 @@
+require('dotenv').config();
 require('./models/connection');
 var express = require('express');
 var path = require('path');
@@ -6,6 +7,9 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+const adminRouter = require('./routes/admin')
+const addressRouter = require('./routes/adress')
+const ordersRouter = require('./routes/orders')
 
 var app = express();
 const cors = require('cors')
@@ -19,5 +23,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/admin', adminRouter);
+app.use('/address', addressRouter)
+app.use('/orders', ordersRouter)
 
 module.exports = app;
