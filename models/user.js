@@ -18,6 +18,7 @@ const userSchema = mongoose.Schema({
     email: String,
     password: String,
     isPro: Boolean,
+    token: String,
     rating: Array,
     professionalInfo: professionalInfoSchema
   
