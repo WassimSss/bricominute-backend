@@ -6,31 +6,31 @@ const orders = require('../models/orders');
 
 
 router.post('/', (req, res) => {
-    const {idUser, idJob, idJobTask,status, price, IdAddress} = req.body
+    const { idUser, idJob, idJobTask, status, price, IdAddress } = req.body
     let date = req.body.date
     if (!date) {
         date = new Date();
     }
-    
-    if( idUser && idJob && idJobTask && date && status && price && IdAddress) {
+
+    if (idUser && idJob && idJobTask && date /*&& status && price && IdAddress */) {
         const newOrders = new orders({
             idUser: idUser,
             idJob: idJob,
             idJobTask: idJobTask,
             Date: date,
             status: status,
-            price: price, 
+            price: price,
             IdAddress: IdAddress
 
         })
         newOrders.save()
-        .then(data =>{res.json({ result: true, data : data})})
+            .then(data => { res.json({ result: true, data: data }) })
     } else {
-        res.json({ result: false})
+        res.json({ result: false })
 
     }
-    
+
 }
-      )
-   
-      module.exports = router;
+)
+
+module.exports = router;
