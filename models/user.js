@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const professionalInfoSchema = mongoose.Schema({
     company_name: String,
     description: String,
@@ -7,6 +6,7 @@ const professionalInfoSchema = mongoose.Schema({
     kbis: String,
     insurance_certificate: String,
     isOnline: Boolean,
+    isOnService: Boolean,
     disponibilities: Array
 });
 
