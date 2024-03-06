@@ -10,19 +10,16 @@ const professionalInfoSchema = mongoose.Schema({
     disponibilities: Array
 });
 
-
-
 const userSchema = mongoose.Schema({
-    firstName: String,
-    lastName: String,
-    email: String,
-    password: String,
-    isPro: Boolean,
-    rating: Array,
-    professionalInfo: professionalInfoSchema
-  
+  firstName: String,
+  lastName: String,
+  email: String,
+  password: String,
+  isPro: Boolean,
+  rating: Array,
+  professionalInfo: professionalInfoSchema
 });
 
-const User = mongoose.model('user', userSchema);
+const User = mongoose.model('users', userSchema);
 
 module.exports = User;
