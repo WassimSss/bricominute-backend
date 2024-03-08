@@ -7,36 +7,27 @@ const Users = require('../models/user')
 const orders = require('../models/orders');
 
 
+router.post('/', async (req, res) => {
 
-//router.get('/isOnService', (req, res) => {
-  //  Place.find({nickname : req.params.nickname}).then(data => {res.json({result : true , places: data})})
-  //})   
-
-  router.post('/', async (req, res) => {
-    const {idUser, idJob, idJobTask, status, price, IdAddress} = req.body;
-    let date = req.body.date;
-
-    // Vérifie si la date existe, sinon utilise la date actuelle
+    try {
+       
+    const {idUser, idJob, idJobTask,status, price, IdAddress} = req.body
+    let date = req.body.date
     if (!date) {
         date = new Date();
     }
     
-    console.log(idUser , idJob , idJobTask , date , status !== undefined , price !== undefined  , IdAddress);
-    if (idUser && idJob && idJobTask && date && status !== undefined && price !== undefined  && IdAddress) {
-        try {
-            // Recherche l'utilisateur par son ID
-
-
-            // Crée une nouvelle commande
-            const newOrders = new orders({
-                idUser: idUser,
-                idJob: idJob,
-                idJobTask: idJobTask,
-                Date: date,
-                status: status,
-                price: price, 
-                IdAddress: IdAddress
-            });
+    if( idUser && /*idPro && */ idJob && idJobTask && date && status && price && IdAddress) {
+        const newOrders = new orders({
+            idUser: idUser,
+            idJob: idJob,
+            // idPro: null,
+            idJobTask: idJobTask,
+            Date: date,
+            status: status,
+            price: price, 
+            IdAddress: IdAddress
+        })
 
             // Enregistre la nouvelle commande
             const data = await newOrders.save();
@@ -60,13 +51,15 @@ const orders = require('../models/orders');
 
             // Renvoie une réponse avec isOnService à true
             res.json({ result: true, data: data });
-        } catch (error) {
-            console.error(error);
-            res.json({ result: false, message: 'Erreur' });
-        }
+            
+        
     } else {
         // Si des champs requis manquent, renvoie une réponse avec isOnService à false
         res.json({ result: false, message: 'Champs requis manquants' });
 }
+    } catch (error) {
+        console.error(error);
+        res.json({ result: false, message: 'Erreur' });
+    }
 });
       module.exports = router;

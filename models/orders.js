@@ -8,6 +8,7 @@ const orderSchema = mongoose.Schema({
     status: Boolean,
     price: Number,
     IdAdress: { type: mongoose.Schema.Types.ObjectId, ref: 'address'},
+    IDpro: String,
 });
 
 
