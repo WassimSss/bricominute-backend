@@ -6,16 +6,17 @@ const orders = require('../models/orders');
 
 
 router.post('/', (req, res) => {
-    const {idUser, idJob, idJobTask,status, price, IdAddress} = req.body
+    const {idUser, idPro, idJob, idJobTask,status, price, IdAddress} = req.body
     let date = req.body.date
     if (!date) {
         date = new Date();
     }
     
-    if( idUser && idJob && idJobTask && date && status && price && IdAddress) {
+    if( idUser && idPro && idJob && idJobTask && date && status && price && IdAddress) {
         const newOrders = new orders({
             idUser: idUser,
             idJob: idJob,
+            idPro: idPro,
             idJobTask: idJobTask,
             Date: date,
             status: status,
