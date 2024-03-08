@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-require('../models/connection');
 const User = require('../models/user');
 const { checkBody } = require('../modules/checkBody');
 const uid2 = require('uid2');
@@ -163,4 +162,23 @@ router.get('/isOnline/:idUser', async (req, res) => {
 
 
 
+// Recuperer le isOnService du user grace a un id
+
+router.get('/getIsOnService/:idUser', async (req, res) => {
+  try {
+    const user = await User.findOne({_id : req.params.idUser})
+    
+    if(!user){
+      return res.json({result : false, error: 'User non trouvé'})
+    }
+    
+    res.json({result: true, isOnService: user.isOnService})
+
+  } catch (error) {
+    
+  }
+
+})
 module.exports = router;
+
+
