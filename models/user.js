@@ -5,8 +5,6 @@ const professionalInfoSchema = mongoose.Schema({
     specialities: Array,
     kbis: String,
     insurance_certificate: String,
-    isOnline: Boolean,
-    isOnService: Boolean,
     disponibilities: Array
 });
 
@@ -19,7 +17,9 @@ const userSchema = mongoose.Schema({
     password: String,
     isPro: Boolean,
     token: String,
-    rating: Array,
+    rating: Array,    
+    isOnline: Boolean,
+    isOnService: Boolean,
     professionalInfo: professionalInfoSchema
   
 });

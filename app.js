@@ -11,8 +11,13 @@ const adminRouter = require('./routes/admin')
 const addressRouter = require('./routes/adress')
 const ordersRouter = require('./routes/orders')
 
+const fileUpload = require('express-fileupload');
+
+
 var app = express();
 const cors = require('cors')
+
+app.use(fileUpload());
 app.use(cors())
 
 app.use(logger('dev'));
