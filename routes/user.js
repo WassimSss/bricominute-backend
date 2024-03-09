@@ -6,16 +6,13 @@ const Orders = require('../models/orders')
 const { checkBody } = require('../modules/checkBody');
 const uid2 = require('uid2');
 const bcrypt = require('bcrypt');
-<<<<<<< HEAD
 const uniqid = require('uniqid');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
-=======
 const geolib = require('geolib');
 
 // const { map } = require('lodash');
 
->>>>>>> adress-localisation-pro-consumer
 
 
 router.post('/upload', async (req, res) => {
@@ -133,14 +130,6 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
       }
     });
 
-<<<<<<< HEAD
-
-  //route qui permet la connection d'un particulier
-  router.post('/signin', (req, res) => {
-    if (!checkBody(req.body, ['email', 'password'])) {
-      res.json({ result: false, error: 'Missing or empty fields' });
-      return;
-=======
     // Renvoyer l'ID de l'utilisateur le plus proche
     if (closestUser) {
 
@@ -167,7 +156,6 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
       Orders.updateOne({ _id: idOrder }, { idPro: closestUser._id })
     } else {
       res.json({ message: "Aucun utilisateur trouvé." });
->>>>>>> adress-localisation-pro-consumer
     }
   } catch (error) {
     console.error('Erreur lors de la recherche de l\'utilisateur le plus proche :', error);
