@@ -12,13 +12,16 @@ const fs = require('fs');
 
 router.post('/upload', async (req, res) => {
   const pdfPaths = [];
-
+  console.log(req.files['selectionPDF']);
   try {
     // Itérer sur tous les fichiers dans la requête
     for (let i = 1; i <= 3; i++) {
+      console.log(req.files[`selectionPDF${i}`]);
       const pdfPath = `./tmp/${uniqid()}.pdf`;
       const resultMove = await req.files[`selectionPDF${i}`].mv(pdfPath);
 
+
+      
       if (!resultMove) {
         pdfPaths.push(pdfPath);
       } else {
@@ -50,6 +53,7 @@ router.post('/upload', async (req, res) => {
 
 // route qui permet l'inscription d'un particulier
 router.post('/signup', (req, res) => {
+  // console.log(req.body);
   if (!checkBody(req.body, ['firstName', 'lastName', 'email', 'password', ])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
@@ -57,6 +61,7 @@ router.post('/signup', (req, res) => {
 
     // Vérifiez si l'utilisateur n'est pas déjà enregistré
     User.findOne({ email: req.body.email }).then(data => {
+      console.log(data);
       if (data === null) {
         const hash = bcrypt.hashSync(req.body.password, 10);
   
@@ -65,8 +70,21 @@ router.post('/signup', (req, res) => {
           lastName: req.body.lastName,
           email: req.body.email,
           password: hash,
-          token: uid2(32),
           isPro: req.body.isPro,
+          token: uid2(32),
+          rating: [],
+          professionalInfo: req.body.isPro ? {
+            // Les champs spécifiques au professionnel à partir du corps de la requête
+            company_name: req.body.company_name,
+            description: req.body.description,
+            specialities: req.body.specialities,
+            kbis: req.body.kbis,
+            insurance_certificate: req.body.insurance,
+            rib: req.body.rib,
+            isOnline: false,
+            disponibilities: [],
+            // position: {latitude : 0, longitude: 0}
+          } : null,
         });
 
         newUser.save().then(newDoc => {
@@ -74,7 +92,7 @@ router.post('/signup', (req, res) => {
         });
       } else {
         // L'utilisateur existe déjà dans la base de données
-        res.json({ result: false, error: 'User already exists' });
+        res.json({ result: false, data: data, error: 'User already exists' });
       }
     });
   });
@@ -97,27 +115,7 @@ router.post('/signup', (req, res) => {
   });
 
 router.put('/changeIsOnline/:idUser', async (req, res) => {
-  // console.log('coucou');
-  // // Récupère l'ID du professionnel à partir des paramètres de l'URL
-  // const professionalId = req.params.idUser;
 
-
-  // // Recherche et met à jour le professionnel par son ID
-  // User.findOne({_id: professionalId})
-  // .then(data => {
-  //   if(data){
-  //     console.log(data.isOnline, !data.isOnline);
-  //     User.updateOne({email: data.email}, {isOnline: !data.isOnline})
-  //     .then(data => {
-    
-  //       res.json({result: true, user: data})
-  //     })
-  //   } else {
-  //     res.json({result: false, error: 'Utilisateur non trouvé'})
-  //   }
-    
-
-  // })
 
   try {
     const professionalId = req.params.idUser;
