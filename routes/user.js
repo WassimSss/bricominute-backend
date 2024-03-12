@@ -66,7 +66,7 @@ router.get('/getIsOnService/:idUser', async (req, res) => {
   } catch (error) {
     
   }
-
+  
 })
 module.exports = router;
 

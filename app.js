@@ -10,6 +10,7 @@ var usersRouter = require('./routes/user');
 const adminRouter = require('./routes/admin')
 const addressRouter = require('./routes/adress')
 const ordersRouter = require('./routes/orders')
+const notationRouter = require('./routes/notation')
 
 var app = express();
 const cors = require('cors')
@@ -26,5 +27,6 @@ app.use('/user', usersRouter);
 app.use('/admin', adminRouter);
 app.use('/address', addressRouter)
 app.use('/orders', ordersRouter)
+app.use('/notation', notationRouter)
 
 module.exports = app;
