@@ -10,6 +10,8 @@ const uniqid = require('uniqid');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const geolib = require('geolib');
+const Order = require('../models/orders');
+const { result } = require('lodash');
 
 // const { map } = require('lodash');
 
@@ -51,7 +53,7 @@ router.post('/upload', async (req, res) => {
 
 // route qui permet l'inscription d'un particulier
 router.post('/signup', (req, res) => {
-	if (!checkBody(req.body, [ 'firstName', 'lastName', 'email', 'password' ])) {
+	if (!checkBody(req.body, ['firstName', 'lastName', 'email', 'password'])) {
 		res.json({ result: false, error: 'Missing or empty fields' });
 		return;
 	}
@@ -81,7 +83,7 @@ router.post('/signup', (req, res) => {
 });
 
 router.post('/signin', (req, res) => {
-	if (!checkBody(req.body, [ 'email', 'password' ])) {
+	if (!checkBody(req.body, ['email', 'password'])) {
 		res.json({ result: false, error: 'Missing or empty fields' });
 		return;
 	}
@@ -106,21 +108,22 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 	try {
 		// Récupérer tous les utilisateurs en ligne depuis la base de données
 		const usersOnline = await User.find({ 'professionalInfo.isOnline': true });
-		console.log(usersOnline);
+		// console.log(usersOnline);
 		let closestUser = null;
 		let minDistance = Infinity;
 
 		// Boucler sur chaque utilisateur
 		usersOnline.forEach((user) => {
-			console.log(user.professionalInfo.position);
-			console.log(locationOrder);
+			// console.log(user.professionalInfo.position);
+			// console.log(locationOrder);
 			// Calculer la distance entre l'utilisateur et la position de la commande
 			const distance = geolib.getDistance(user.professionalInfo.position, locationOrder);
 			const distanceInKilometers = geolib.convertDistance(distance, 'km');
 
 			// Mettre à jour l'utilisateur le plus proche si nécessaire
-			console.log('distanceInKilometers : ', distanceInKilometers);
-			if (distance < minDistance && distanceInKilometers < 500) {
+			// console.log('distanceInKilometers : ', distanceInKilometers);
+			console.log('isIncludes : ', user.professionalInfo.rejectedOrders.includes(idOrder));
+			if (distance < minDistance && distanceInKilometers && user.professionalInfo.rejectedOrders.includes(idOrder) === false) {
 				// limite a 10km
 				closestUser = user;
 				minDistance = distanceInKilometers;
@@ -131,19 +134,20 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 		if (closestUser) {
 			// Upload l'odrer pour ui attribuer le pro trouvé
 			Orders.updateOne({ _id: idOrder }, { idPro: closestUser._id }).then(
-				User.updateOne({ _id: closestUser._id }, { idOrder: idOrder }).then(
-					// Passer a l'user l'id de la commande en cours
-					User.findOne({ _id: closestUser._id }).then((data) => {
-						res.json({
-							result: true,
-							test: data,
-							user: {
-								firstName: data.firstName,
-								lastName: data.lastName,
-								company_name: data.company_name
-							} /*userId: closestUser._id, distance: distanceInKilometers */
-						});
-					})
+				User.updateOne({ _id: closestUser._id }, { 'professionalInfo.requestIdOrder': idOrder }).then(
+					res.json({ result: true, message: `User ${closestUser._id} trouvé, il doit accepter ou refuser la commande` })
+					// Maintenant le pro doit accepter ou non la commande 
+					// User.findOne({ _id: closestUser._id }).then((data) => {
+					// res.json({
+					// 	result: true,
+					// 	test: data,
+					// 	user: {
+					// 		firstName: data.firstName,
+					// 		lastName: data.lastName,
+					// 		company_name: data.company_name
+					// 	} /*userId: closestUser._id, distance: distanceInKilometers */
+					// });
+					// 	})
 				)
 			);
 
@@ -157,14 +161,14 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 	}
 });
 
-router.get('/isOnService/:token', (req, res) => {
+router.get('/isOnOrder/:token', (req, res) => {
 	const token = req.params.token;
 
 	User.findOne({ token: token }).then((data) => {
-		console.log(data);
+		// console.log(data);
 
 		if (data.idOrder) {
-			res.json({ result: true });
+			res.json({ result: true, idOrder: data.idOrder });
 		} else {
 			res.json({ result: false });
 		}
@@ -205,7 +209,7 @@ router.get('/isOnline/:token', async (req, res) => {
 		}
 
 		console.log(user);
-		res.json({ result: true, isOnline: user.isOnline });
+		res.json({ result: true, isOnline: user.professionalInfo.isOnline });
 	} catch (error) {
 		console.error('Erreur lors de la mise à jour :', error);
 		res.status(500).json({ result: false, error: 'Erreur serveur' });
@@ -224,6 +228,83 @@ router.get('/getIsOnService/:idUser', async (req, res) => {
 		}
 
 		res.json({ result: true, isOnService: user.isOnService });
-	} catch (error) {}
+	} catch (error) { }
 });
+
+router.get('/checkIfOrderRequest/:token', (req, res) => {
+
+	try {
+		User.findOne({ token: req.params.token })
+			.then(dataUser => {
+				// console.log(dataUser);
+				if (dataUser && dataUser.professionalInfo.isOnline === true) {
+					if (dataUser.professionalInfo.requestIdOrder !== undefined) {
+						Order.findOne({ _id: dataUser.professionalInfo.requestIdOrder })
+							.then(dataOrder => {
+
+								const allJob = dataOrder.idJob.map(e => {
+									return e.name
+								})
+
+								const allTask = dataOrder.idJobTask.map(e => {
+									return e.name
+								})
+
+								const orderObject = {
+									job: allJob,
+									idTask: allTask,
+									idAddress: dataOrder.IdAddress,
+									price: dataOrder.price
+								}
+								res.json({ result: true, proGetOrder: true, order: orderObject })
+							})
+					} else {
+						res.json({ result: true, proGetOrder: false })
+					}
+				} else {
+					res.json({ result: false, error: 'user not found or not connected' });
+				}
+			}
+			)
+	} catch (error) {
+
+	}
+})
+
+router.post('/refuseOrder/:token', async (req, res) => {
+	const token = req.params.token;
+
+	try {
+		// Rechercher l'utilisateur par son token
+		const user = await User.findOne({ token: token });
+
+		if (user) {
+			// Rechercher la commande de l'utilisateur
+			const order = await Order.findOne({ _id: user.professionalInfo.requestIdOrder });
+
+			if (order) {
+				// Supprimer l'ID du professionnel associé à la commande
+				await Order.updateOne({ _id: order._id }, { $unset: { idPro: 1 } });
+
+				// Supprimer l'ID de la commande de l'utilisateur
+				await User.updateOne({ token: token }, { $unset: { 'professionalInfo.requestIdOrder': 1 } });
+
+				// Ajouter l'ID de la commande refusée aux ordres refusés de l'utilisateur
+				await User.updateOne({ token: token }, { $push: { 'professionalInfo.rejectedOrders': order._id } });
+
+				res.json({ result: true, message: 'La commande a été refusée avec succès.' });
+			} else {
+				res.json({ result: false, error: 'Commande de l\'utilisateur non trouvée.' });
+			}
+		} else {
+			res.json({ result: false, error: 'Utilisateur non trouvé par le token.' });
+		}
+	} catch (error) {
+		res.status(500).json({ result: false, error: error.message });
+	}
+});
+
+router.post('/acceptOrder/:token', (req, res) => {
+
+})
 module.exports = router;

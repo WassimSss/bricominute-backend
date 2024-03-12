@@ -8,6 +8,8 @@ const professionalInfoSchema = mongoose.Schema({
     isOnline: Boolean,
     disponibilities: Array,
     position: Object,
+    requestIdOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'orders' },
+    rejectedOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'orders' }]
 });
 
 
@@ -20,7 +22,7 @@ const userSchema = mongoose.Schema({
     password: String,
     isPro: Boolean,
     token: String,
-    rating: Array,    
+    rating: Array,
     isOnService: Boolean,
     professionalInfo: professionalInfoSchema
 

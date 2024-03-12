@@ -3,6 +3,8 @@ var router = express.Router();
 const uid2 = require('uid2');
 const Users = require('../models/user');
 const orders = require('../models/orders');
+const Order = require('../models/orders');
+const User = require('../models/user');
 
 router.post('/', async (req, res) => {
 	try {
@@ -95,4 +97,41 @@ router.get('/isProFinded/:idOrder', (req, res) => {
 		// if(data)
 	});
 });
+
+router.delete('/delete/:idOrder', async (req, res) => {
+	const idOrder = req.params.idOrder
+	try {
+		const order = await orders.findOne({ _id: idOrder })
+
+		if (!order) {
+			res.json({ result: false, error: "La commande n'a pas été trouvé" })
+		}
+
+		const user = await User.findOne({ _id: order.idUser })
+
+		if (!user) {
+			res.json({ result: false, error: "L'utilisateur n'a pas été trouvé ou n'a pas de commande" })
+		}
+
+		user.idOrder = null; // Supprimer la commande sur le user qui a passé la commande
+		await user.save();
+
+		const pro = await User.findOne({ 'professionalInfo.requestIdOrder': order._id })
+
+		pro.professionalInfo.requestIdOrder = null; // Supprimer la commande sur le pro qui a potentiellement reçu la commande
+
+		await pro.save();
+
+		const deletedOrder = await Order.deleteOne({ _id: idOrder }); // Supprime la commande dans la table order
+
+		if (deletedOrder.deletedCount === 0) {
+			return res.json({ result: false, error: "La commande n'a pas été trouvée ou n'a pas été supprimée" });
+		}
+
+		res.json({ result: true, message: "La commande a bien été supprimé !" })
+	} catch (error) {
+		console.error("Erreur lors de la suppression de la commande :", error);
+		res.status(500).json({ result: false, error: "Erreur interne du serveur" });
+	}
+})
 module.exports = router;
