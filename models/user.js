@@ -5,18 +5,12 @@ const professionalInfoSchema = mongoose.Schema({
     specialities: Array,
     kbis: String,
     insurance_certificate: String,
-<<<<<<< HEAD
     rib: String,
-    isOnline: Boolean,
-    disponibilities: Array,
-    position: Object
-=======
     isOnline: Boolean,
     disponibilities: Array,
     position: Object,
     requestIdOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'orders' },
     rejectedOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'orders' }]
->>>>>>> notif-order
 });
 
 
@@ -29,11 +23,7 @@ const userSchema = mongoose.Schema({
     password: String,
     isPro: Boolean,
     token: String,
-<<<<<<< HEAD
-    rating: Array,    
-=======
     rating: Array,
->>>>>>> notif-order
     isOnService: Boolean,
     professionalInfo: professionalInfoSchema
 
