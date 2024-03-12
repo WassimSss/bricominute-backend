@@ -12,7 +12,6 @@ const addressRouter = require('./routes/adress')
 const ordersRouter = require('./routes/orders')
 const jobRouter = require('./routes/job')
 
-
 const fileUpload = require('express-fileupload');
 
 
@@ -34,6 +33,5 @@ app.use('/admin', adminRouter);
 app.use('/address', addressRouter)
 app.use('/orders', ordersRouter)
 app.use('/job', jobRouter)
-
 
 module.exports = app;
