@@ -56,7 +56,7 @@ router.post('/upload', async (req, res) => {
 
 // route qui permet l'inscription d'un particulier
 router.post('/signup', (req, res) => {
-  // console.log(req.body);
+  
   if (!checkBody(req.body, ['firstName', 'lastName', 'email', 'password', ])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
@@ -95,12 +95,29 @@ router.post('/signup', (req, res) => {
         });
       } else {
         // L'utilisateur existe déjà dans la base de données
-        res.json({ result: false, data: data, error: 'User already exists' });
+		console.log('user already exist');
+        res.json({ result: false, error: 'User already exists' });
       }
     });
   });
 
+router.get('/testAlreadyExist/:email', async (req, res) => {
+	const email = req.params.email
+	try {
+		const user = await User.findOne({email: email})
 
+		if(user){
+			res.json({result: false, error: 'User already exist'})
+		} else {
+			res.json({result: true})
+		}
+
+	} catch (error) {
+		console.log(error);
+		res.json({error: error})
+	}
+
+})
   //route qui permet la connection d'un particulier
   router.post('/signin', (req, res) => {
     if (!checkBody(req.body, ['email', 'password'])) {
@@ -110,7 +127,7 @@ router.post('/signup', (req, res) => {
   
     User.findOne({ email: req.body.email }).then(data => {
       if (data && bcrypt.compareSync(req.body.password, data.password)) {
-        res.json({ result: true, token: data.token });
+        res.json({ result: true, token: data.token, isPro: data.isPro });
       } else {
         res.json({ result: false, error: 'User not found or wrong password' });
       }
