@@ -409,7 +409,7 @@ router.get('/isOnOrder/:token', async (req, res) => {
 			res.json({ result: false, error: "L'utilisateur n'a pas été trouvé" })
 		}
 
-		const order = await Order.findOne({ _id: user.idOrder })
+		const order = await Order.findOne({ _id: user.idOrder, status: false })
 
 		if (!order) {
 			res.json({ result: false, error: "L'utilisateur n'a pas de commande ou n'en a pas accepté" })

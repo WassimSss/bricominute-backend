@@ -157,6 +157,9 @@ router.put('/proEndOrder/:token', async (req, res) => {
 			return res.json({ result: false, error: "La commande n'a pas été trouvé" })
 		}
 
+		const consummer = await User.findOne({ idOrder: order._id })
+
+
 
 
 		if (user._id.toString() !== order.idPro.toString()) {
@@ -166,8 +169,10 @@ router.put('/proEndOrder/:token', async (req, res) => {
 		order.status = true
 		user.idOrder = null
 		user.professionalInfo.requestIdOrder = null
+		consummer.idOrder = null
 		await order.save()
 		await user.save()
+		await consummer.save()
 
 		return res.json({ result: true, message: 'Statut de la commande mis à jour avec succès' });
 	} catch (error) {
