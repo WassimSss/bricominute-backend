@@ -16,24 +16,24 @@ const { result } = require('lodash');
 // const { map } = require('lodash');
 
 router.post('/upload', async (req, res) => {
-  const pdfPaths = [];
-  console.log(req.files['selectionPDF']);
-  try {
-    // Itérer sur tous les fichiers dans la requête
-    for (let i = 1; i <= 3; i++) {
-      console.log(req.files[`selectionPDF${i}`]);
-      const pdfPath = `./tmp/${uniqid()}.pdf`;
-      const resultMove = await req.files[`selectionPDF${i}`].mv(pdfPath);
+	const pdfPaths = [];
+	// console.log(req.files['selectionPDF']);
+	try {
+		// Itérer sur tous les fichiers dans la requête
+		for (let i = 1; i <= 3; i++) {
+			// console.log(req.files[`selectionPDF${i}`]);
+			const pdfPath = `./tmp/${uniqid()}.pdf`;
+			const resultMove = await req.files[`selectionPDF${i}`].mv(pdfPath);
 
 
-      
-      if (!resultMove) {
-        pdfPaths.push(pdfPath);
-      } else {
-        // Si le déplacement du fichier échoue, annulez l'opération
-        throw new Error(resultMove);
-      }
-    }
+
+			if (!resultMove) {
+				pdfPaths.push(pdfPath);
+			} else {
+				// Si le déplacement du fichier échoue, annulez l'opération
+				throw new Error(resultMove);
+			}
+		}
 
 		// Uploader tous les fichiers sur Cloudinary
 		const uploadPromises = pdfPaths.map(async (path) => {
@@ -56,104 +56,104 @@ router.post('/upload', async (req, res) => {
 
 // route qui permet l'inscription d'un particulier
 router.post('/signup', (req, res) => {
-  
-  if (!checkBody(req.body, ['firstName', 'lastName', 'email', 'password', ])) {
-    res.json({ result: false, error: 'Missing or empty fields' });
-    return;
-  }
 
-    // Vérifiez si l'utilisateur n'est pas déjà enregistré
-    User.findOne({ email: req.body.email }).then(data => {
-      console.log(data);
-      if (data === null) {
-        const hash = bcrypt.hashSync(req.body.password, 10);
-  
-        const newUser = new User({
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          email: req.body.email,
-          password: hash,
-          isPro: req.body.isPro,
-          token: uid2(32),
-          rating: [],
-          professionalInfo: req.body.isPro ? {
-            // Les champs spécifiques au professionnel à partir du corps de la requête
-            company_name: req.body.company_name,
-            description: req.body.description,
-            specialities: req.body.specialities,
-            kbis: req.body.kbis,
-            insurance_certificate: req.body.insurance,
-            rib: req.body.rib,
-            isOnline: false,
-            disponibilities: [],
-            // position: {latitude : 0, longitude: 0}
-          } : null,
-        });
+	if (!checkBody(req.body, ['firstName', 'lastName', 'email', 'password',])) {
+		res.json({ result: false, error: 'Missing or empty fields' });
+		return;
+	}
 
-        newUser.save().then(newDoc => {
-          res.json({ result: true, token: newDoc.token });
-        });
-      } else {
-        // L'utilisateur existe déjà dans la base de données
-		console.log('user already exist');
-        res.json({ result: false, error: 'User already exists' });
-      }
-    });
-  });
+	// Vérifiez si l'utilisateur n'est pas déjà enregistré
+	User.findOne({ email: req.body.email }).then(data => {
+		// console.log(data);
+		if (data === null) {
+			const hash = bcrypt.hashSync(req.body.password, 10);
+
+			const newUser = new User({
+				firstName: req.body.firstName,
+				lastName: req.body.lastName,
+				email: req.body.email,
+				password: hash,
+				isPro: req.body.isPro,
+				token: uid2(32),
+				rating: [],
+				professionalInfo: req.body.isPro ? {
+					// Les champs spécifiques au professionnel à partir du corps de la requête
+					company_name: req.body.company_name,
+					description: req.body.description,
+					specialities: req.body.specialities,
+					kbis: req.body.kbis,
+					insurance_certificate: req.body.insurance,
+					rib: req.body.rib,
+					isOnline: false,
+					disponibilities: [],
+					// position: {latitude : 0, longitude: 0}
+				} : null,
+			});
+
+			newUser.save().then(newDoc => {
+				res.json({ result: true, token: newDoc.token });
+			});
+		} else {
+			// L'utilisateur existe déjà dans la base de données
+			// console.log('user already exist');
+			res.json({ result: false, error: 'User already exists' });
+		}
+	});
+});
 
 router.get('/testAlreadyExist/:email', async (req, res) => {
 	const email = req.params.email
 	try {
-		const user = await User.findOne({email: email})
+		const user = await User.findOne({ email: email })
 
-		if(user){
-			res.json({result: false, error: 'User already exist'})
+		if (user) {
+			res.json({ result: false, error: 'User already exist' })
 		} else {
-			res.json({result: true})
+			res.json({ result: true })
 		}
 
 	} catch (error) {
-		console.log(error);
-		res.json({error: error})
+		// console.log(error);
+		res.json({ error: error })
 	}
 
 })
-  //route qui permet la connection d'un particulier
-  router.post('/signin', (req, res) => {
-    if (!checkBody(req.body, ['email', 'password'])) {
-      res.json({ result: false, error: 'Missing or empty fields' });
-      return;
-    }
-  
-    User.findOne({ email: req.body.email }).then(data => {
-      if (data && bcrypt.compareSync(req.body.password, data.password)) {
-        res.json({ result: true, token: data.token, isPro: data.isPro });
-      } else {
-        res.json({ result: false, error: 'User not found or wrong password' });
-      }
-    });
-  });
+//route qui permet la connection d'un particulier
+router.post('/signin', (req, res) => {
+	if (!checkBody(req.body, ['email', 'password'])) {
+		res.json({ result: false, error: 'Missing or empty fields' });
+		return;
+	}
+
+	User.findOne({ email: req.body.email }).then(data => {
+		if (data && bcrypt.compareSync(req.body.password, data.password)) {
+			res.json({ result: true, token: data.token, isPro: data.isPro });
+		} else {
+			res.json({ result: false, error: 'User not found or wrong password' });
+		}
+	});
+});
 
 router.put('/changeIsOnline/:idUser', async (req, res) => {
 
 
-  try {
-    const professionalId = req.params.idUser;
-    const user = await User.findOne({ _id: professionalId });
+	try {
+		const professionalId = req.params.idUser;
+		const user = await User.findOne({ _id: professionalId });
 
-    if (!user) {
-      return res.json({ result: false, error: 'Utilisateur non trouvé' });
-    }
+		if (!user) {
+			return res.json({ result: false, error: 'Utilisateur non trouvé' });
+		}
 
-    // Inverse la valeur de isOnline
-    user.isOnline = !user.isOnline;
-    await user.save();
+		// Inverse la valeur de isOnline
+		user.isOnline = !user.isOnline;
+		await user.save();
 
-    res.json({ result: true, user });
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour :', error);
-    res.status(500).json({ result: false, error: 'Erreur serveur' });
-  }
+		res.json({ result: true, user });
+	} catch (error) {
+		console.error('Erreur lors de la mise à jour :', error);
+		res.status(500).json({ result: false, error: 'Erreur serveur' });
+	}
 });
 
 router.post('/signin', (req, res) => {
@@ -194,9 +194,9 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 			const distance = geolib.getDistance(user.professionalInfo.position, locationOrder);
 			const distanceInKilometers = geolib.convertDistance(distance, 'km');
 
-			// Mettre à jour l'utilisateur le plus proche si nécessaire
+			// Mettre à jour l'utilisateur le plus proche
 			// console.log('distanceInKilometers : ', distanceInKilometers);
-			console.log('isIncludes : ', user.professionalInfo.rejectedOrders.includes(idOrder));
+			// console.log('isIncludes : ', user.professionalInfo.rejectedOrders.includes(idOrder));
 			if (distance < minDistance && distanceInKilometers && user.professionalInfo.rejectedOrders.includes(idOrder) === false) {
 				// limite a 10km
 				closestUser = user;
@@ -207,7 +207,7 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 		// Renvoyer l'ID de l'utilisateur le plus proche
 		if (closestUser) {
 			// Upload l'odrer pour ui attribuer le pro trouvé
-			Orders.updateOne({ _id: idOrder }, { idPro: closestUser._id }).then(
+			Orders.updateOne({ _id: idOrder }, { requestIdPro: closestUser._id }).then(
 				User.updateOne({ _id: closestUser._id }, { 'professionalInfo.requestIdOrder': idOrder }).then(
 					res.json({ result: true, message: `User ${closestUser._id} trouvé, il doit accepter ou refuser la commande` })
 					// Maintenant le pro doit accepter ou non la commande 
@@ -225,7 +225,7 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 				)
 			);
 
-			Orders.updateOne({ _id: idOrder }, { idPro: closestUser._id });
+			// Orders.updateOne({ _id: idOrder }, { requestIdPro: closestUser._id });
 		} else {
 			res.json({ message: 'Aucun utilisateur trouvé.' });
 		}
@@ -233,20 +233,6 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 		console.error("Erreur lors de la recherche de l'utilisateur le plus proche :", error);
 		res.status(500).json({ error: 'Erreur interne du serveur.' });
 	}
-});
-
-router.get('/isOnOrder/:token', (req, res) => {
-	const token = req.params.token;
-
-	User.findOne({ token: token }).then((data) => {
-		// console.log(data);
-
-		if (data.idOrder) {
-			res.json({ result: true, idOrder: data.idOrder });
-		} else {
-			res.json({ result: false });
-		}
-	});
 });
 
 router.put('/changeIsOnline', async (req, res) => {
@@ -258,7 +244,7 @@ router.put('/changeIsOnline', async (req, res) => {
 			return res.json({ result: false, error: 'Utilisateur non trouvé' });
 		}
 
-		console.log(user);
+		// console.log(user);
 		// Inverse la valeur de isOnline
 		user.professionalInfo.isOnline = !user.professionalInfo.isOnline;
 		await user.save();
@@ -277,12 +263,12 @@ router.get('/isOnline/:token', async (req, res) => {
 	try {
 		const user = await User.findOne({ token: token });
 
-		console.log(user);
+		// console.log(user);
 		if (!user) {
 			return res.json({ result: false, error: 'Utilisateur non trouvé' });
 		}
 
-		console.log(user);
+		// console.log(user);
 		res.json({ result: true, isOnline: user.professionalInfo.isOnline });
 	} catch (error) {
 		console.error('Erreur lors de la mise à jour :', error);
@@ -310,11 +296,15 @@ router.get('/checkIfOrderRequest/:token', (req, res) => {
 	try {
 		User.findOne({ token: req.params.token })
 			.then(dataUser => {
-				// console.log(dataUser);
+				console.log('dataUser : ', dataUser);
 				if (dataUser && dataUser.professionalInfo.isOnline === true) {
-					if (dataUser.professionalInfo.requestIdOrder !== undefined) {
+					// console.log(dataUser.professionalInfo.requestIdOrder);
+					// Si il a reçu une requete est si idOrder n'est pas vide(ça veut dire qu'il n'a pas validé de commande)
+					if (dataUser.professionalInfo.requestIdOrder !== null && dataUser.idOrder == null) {
 						Order.findOne({ _id: dataUser.professionalInfo.requestIdOrder })
 							.then(dataOrder => {
+
+								// console.log(dataOrder);
 
 								const allJob = dataOrder.idJob.map(e => {
 									return e.name
@@ -378,7 +368,102 @@ router.post('/refuseOrder/:token', async (req, res) => {
 	}
 });
 
-router.post('/acceptOrder/:token', (req, res) => {
+router.post('/acceptOrder/:token', async (req, res) => {
+	const token = req.params.token;
 
+	try {
+		// Rechercher l'utilisateur par son token
+		const user = await User.findOne({ token: token });
+
+		if (user) {
+			// Rechercher la commande de l'utilisateur
+			const order = await Order.findOne({ _id: user.professionalInfo.requestIdOrder });
+
+			if (order) {
+				// Mettre requestIdPro de order a idPro sur ORDER pour dire au client qu'il a validé
+				await Order.updateOne({ _id: order._id }, { idPro: user._id });
+
+				// Mettre requestIdPro de user a idOrder sur le USER pour validé la commande
+				await User.updateOne({ token: token }, { idOrder: user.professionalInfo.requestIdOrder });
+
+				res.json({ result: true, message: 'La commande a été accepté !' });
+			} else {
+				res.json({ result: false, error: 'La commande a du être annulée...' });
+			}
+		} else {
+			res.json({ result: false, error: 'Utilisateur non trouvé par le token.' });
+		}
+	} catch (error) {
+		res.status(500).json({ result: false, error: error.message });
+	}
 })
+
+router.get('/isOnOrder/:token', async (req, res) => {
+	const token = req.params.token
+	try {
+
+		const user = await User.findOne({ token: token })
+		console.log('isOnOrder : ', user);
+
+		if (!user) {
+			res.json({ result: false, error: "L'utilisateur n'a pas été trouvé" })
+		}
+
+		const order = await Order.findOne({ _id: user.idOrder })
+
+		if (!order) {
+			res.json({ result: false, error: "L'utilisateur n'a pas de commande ou n'en a pas accepté" })
+		} else {
+			res.json({ result: true, order: order })
+
+		}
+
+		console.log(order);
+	} catch (error) {
+		res.json({ result: false, error: error })
+
+	}
+})
+
+router.get('/getUser/:idUser', async (req, res) => {
+	const idUser = req.params.idUser
+	try {
+		console.log('yo');
+		const user = await User.findOne({ _id: idUser })
+
+		if (!user) {
+			res.json({ result: false, error: 'User not find' })
+		} else {
+			res.json({ result: true, firstName: user.firstName, lastName: user.lastName })
+		}
+
+
+	} catch (error) {
+		res.json({ result: false, error })
+	}
+})
+
+router.put('/refreshLocation/:token', async (req, res) => {
+	const token = req.params.token
+	const { latitude, longitude } = req.body
+
+	console.log('latitdude : ', latitude, 'longitude: ', longitude);
+	try {
+		const user = await User.findOne({ token: token })
+
+		if (!user) {
+			res.json({ result: false, error: 'User not found' })
+		} else {
+			const userUpdated = await User.updateOne({ token: token }, { 'professionalInfo.position.latitude': latitude, 'professionalInfo.position.longitude': longitude })
+			res.json({ result: true, message: 'position updated', user: userUpdated })
+		}
+
+
+	} catch (error) {
+		console.log(error);
+		res.json({ result: false, error })
+	}
+})
+
+// router
 module.exports = router;

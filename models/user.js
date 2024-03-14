@@ -8,7 +8,10 @@ const professionalInfoSchema = mongoose.Schema({
     rib: String,
     isOnline: Boolean,
     disponibilities: Array,
-    position: Object,
+    position: {
+        latitude: Number,
+        longitude: Number
+    },
     requestIdOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'orders' },
     rejectedOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'orders' }]
 });
@@ -18,6 +21,9 @@ const professionalInfoSchema = mongoose.Schema({
 const userSchema = mongoose.Schema({
     firstName: String,
     lastName: String,
+    // idOrder dans le user si il est remplie par l'id d'une order
+    // chez un particulier sa veut dire qu'il a fait une demande d'order
+    // si c'est chez un pro ça veut dire qu'il a une mission en cours
     idOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'orders' },
     email: String,
     password: String,

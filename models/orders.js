@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const orderSchema = mongoose.Schema({
   idUser: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
+  requestIdPro: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
   idPro: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
   idJob: Array,
   idJobTask: Array,

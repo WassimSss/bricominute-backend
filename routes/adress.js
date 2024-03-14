@@ -38,7 +38,8 @@ router.get('/:idAddress', (req, res) => {
                 // await db.collection('collection').insertOne(apiResponseJson)
                 const longitude = apiResponseJson.features[0].geometry.coordinates[0]
                 const latitude = apiResponseJson.features[0].geometry.coordinates[1]
-                res.json({ longitude, latitude });
+                const street = data.street_number + ' ' + data.street
+                res.json({ result: true, longitude, latitude, street });
             } else {
                 res.json({ result: false, message: "Adresse non trouvée" });
             }

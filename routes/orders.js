@@ -118,10 +118,12 @@ router.delete('/delete/:idOrder', async (req, res) => {
 
 		const pro = await User.findOne({ 'professionalInfo.requestIdOrder': order._id })
 
+		console.log('pro info : ', pro.professionalInfo.requestIdOrder);
 		pro.professionalInfo.requestIdOrder = null; // Supprimer la commande sur le pro qui a potentiellement reçu la commande
 
 		await pro.save();
 
+		// if(order.)
 		const deletedOrder = await Order.deleteOne({ _id: idOrder }); // Supprime la commande dans la table order
 
 		if (deletedOrder.deletedCount === 0) {
@@ -134,4 +136,47 @@ router.delete('/delete/:idOrder', async (req, res) => {
 		res.status(500).json({ result: false, error: "Erreur interne du serveur" });
 	}
 })
+
+router.put('/proEndOrder/:token', async (req, res) => {
+	const { token, idOrder } = req.params
+
+	try {
+		const user = await User.findOne({ token: token })
+
+		if (!user) {
+			return res.json({ result: false, error: "L'utilisateur n'a pas été trouvé " })
+		}
+
+		if (user.isPro !== true) {
+			return res.json({ result: false, error: "L'utilisateur n'est pas un pro " })
+		}
+
+		const order = await Order.findOne({ _id: user.idOrder })
+
+		if (!order) {
+			return res.json({ result: false, error: "La commande n'a pas été trouvé" })
+		}
+
+
+
+		if (user._id.toString() !== order.idPro.toString()) {
+			return res.json({ result: false, error: "Vous n'avez pas le droit de mettre fin a cette commande" })
+		}
+
+		order.status = true
+		user.idOrder = null
+		user.professionalInfo.requestIdOrder = null
+		await order.save()
+		await user.save()
+
+		return res.json({ result: true, message: 'Statut de la commande mis à jour avec succès' });
+	} catch (error) {
+		console.error("Erreur lors de finalisation de la commande :", error);
+		return res.status(500).json({ result: false, error: "Erreur interne du serveur" });
+	}
+})
+// Recup une addresse a partir de un idAddress
+// router
+
+// Recup un user a partir d'un idUser
 module.exports = router;
