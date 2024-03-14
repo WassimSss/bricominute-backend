@@ -14,6 +14,7 @@ const jobRouter = require('./routes/job')
 
 const fileUpload = require('express-fileupload');
 
+const messageRouter = require('./routes/message')
 
 var app = express();
 const cors = require('cors')
@@ -33,5 +34,7 @@ app.use('/admin', adminRouter);
 app.use('/address', addressRouter)
 app.use('/orders', ordersRouter)
 app.use('/job', jobRouter)
+app.use('/', messageRouter);
+
 
 module.exports = app;
