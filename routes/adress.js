@@ -3,21 +3,27 @@ const fetch = require('node-fetch')
 var router = express.Router();
 const uid2 = require('uid2');
 const Users = require('../models/user')
-const Address = require('../models/adresse')
+const Address = require('../models/adresse');
+const User = require('../models/user');
 
-router.post('/', (req, res) => {
-    const { idUser, street_number, street, zip_code, city } = req.body
+router.post('/', async (req, res) => {
+    const { street_number, street, zip_code, city, token } = req.body
 
-    if (idUser && street_number && street && zip_code && city) {
+    const user = await User.findOne({ token: token })
+
+    // Ajouter verif si user existe pas return flse
+    if (street_number && street && zip_code && city) {
         const newAdress = new Address({
-            idUser: idUser,
+            idUser: user._id,
             street_number: street_number,
             street: street,
             zip_code: zip_code,
             city: city,
         })
         newAdress.save()
-            .then(res.json({ result: true }))
+            .then(res.json({
+                result: true, address: newAdress
+            }))
     } else {
         res.json({ result: false })
 

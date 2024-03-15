@@ -5,6 +5,7 @@ const Users = require('../models/user');
 const orders = require('../models/orders');
 const Order = require('../models/orders');
 const User = require('../models/user');
+const Address = require('../models/adresse');
 
 router.post('/', async (req, res) => {
 	try {
@@ -207,6 +208,43 @@ router.get('/checkIfOrderFinished/:idOrder', async (req, res) => {
 	} catch (error) {
 		console.error(error)
 		res.status(500).json({ result: false, error })
+	}
+})
+
+router.get('/:token', async (req, res) => {
+	const { token } = req.params
+
+	try {
+		const user = await User.findOne({ token: token })
+
+		if (!user) {
+			return res.json({ result: false, error: "L'utilisateur n'a pas été trouvé " })
+		}
+
+		const orders = await Order.find({ idUser: user._id })
+
+		if (!orders) {
+			return res.json({ result: false, error: "Les commandes n'ont pas été trouvé" })
+		}
+
+		const ordersMap = await Promise.all(orders.map(async (order) => {
+			const address = await Address.findOne({ _id: order.IdAddress });
+
+			return {
+				job: order.idJob,
+				task: order.idJobTask,
+				price: order.price,
+				date: order.Date,
+				address: address
+			};
+		}));
+
+		console.log(ordersMap);
+		console.log(ordersMap);
+		return res.json({ result: true, orders: ordersMap });
+	} catch (error) {
+		console.error("Erreur lors de finalisation de la commande :", error);
+		return res.status(500).json({ result: false, error: "Erreur interne du serveur" });
 	}
 })
 // Recup une addresse a partir de un idAddress
