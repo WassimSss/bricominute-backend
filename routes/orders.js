@@ -17,15 +17,21 @@ router.post('/', async (req, res) => {
 		if (token && idJob && idJobTask && date /*&& status && price && IdAddress */) {
 			Users.findOne({ token: token }).then(async (findedUser) => {
 				console.log(findedUser._id);
+
 				if (findedUser) {
+					let price = 0;
+					for (let i = 0; i < idJobTask.length; i++) {
+						price += idJobTask[i].price
+					}
+
 					const newOrders = new orders({
 						idUser: findedUser._id,
 						idJob: idJob,
 						// idPro: null,
 						idJobTask: idJobTask,
 						Date: date,
-						status: false, // Pour l'instant en dur
-						price: 100, // Pour l'instant en dur
+						status: false,
+						price: price,
 						IdAddress: '65e5ec8fa7d7b53b75681b38' // Pour l'instant en dur
 					});
 
@@ -169,6 +175,7 @@ router.put('/proEndOrder/:token', async (req, res) => {
 		order.status = true
 		user.idOrder = null
 		user.professionalInfo.requestIdOrder = null
+		user.professionalInfo.money = user.professionalInfo.money + order.price * 0.6
 		consummer.idOrder = null
 		await order.save()
 		await user.save()
@@ -178,6 +185,28 @@ router.put('/proEndOrder/:token', async (req, res) => {
 	} catch (error) {
 		console.error("Erreur lors de finalisation de la commande :", error);
 		return res.status(500).json({ result: false, error: "Erreur interne du serveur" });
+	}
+})
+
+router.get('/checkIfOrderFinished/:idOrder', async (req, res) => {
+	try {
+		const idOrder = req.params.idOrder
+
+		const order = await Order.findOne({ _id: idOrder })
+
+		if (!order) {
+			return res.json({ result: false, message: 'order not found' })
+		}
+
+		if (order.status) {
+			return res.json({ result: true, finished: true })
+		} else {
+			return res.json({ result: true, finished: false })
+		}
+
+	} catch (error) {
+		console.error(error)
+		res.status(500).json({ result: false, error })
 	}
 })
 // Recup une addresse a partir de un idAddress

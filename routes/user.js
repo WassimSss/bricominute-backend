@@ -86,7 +86,8 @@ router.post('/signup', (req, res) => {
 					rib: req.body.rib,
 					isOnline: false,
 					disponibilities: [],
-					// position: {latitude : 0, longitude: 0}
+					money: 0
+					// position: {latitude : null, longitude: null}
 				} : null,
 			});
 
@@ -209,6 +210,7 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 			// Upload l'odrer pour ui attribuer le pro trouvé
 			Orders.updateOne({ _id: idOrder }, { requestIdPro: closestUser._id }).then(
 				User.updateOne({ _id: closestUser._id }, { 'professionalInfo.requestIdOrder': idOrder }).then(
+
 					res.json({ result: true, message: `User ${closestUser._id} trouvé, il doit accepter ou refuser la commande` })
 					// Maintenant le pro doit accepter ou non la commande 
 					// User.findOne({ _id: closestUser._id }).then((data) => {
@@ -234,6 +236,48 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 		res.status(500).json({ error: 'Erreur interne du serveur.' });
 	}
 });
+
+router.get('/checkIfProAcceptOrder/:token', async (req, res) => {
+	try {
+		const token = req.params.token
+
+		const user = await User.findOne({ token: token })
+
+		if (!user) {
+			return res.json({ result: false, error: "Pas de user avec se token" })
+		}
+
+		const order = await Order.findOne({ _id: user.idOrder })
+
+		if (!order) {
+			return res.json({ result: false, error: "Pas de order avec cette id" })
+		}
+
+		const pro = await User.findOne({ _id: order.requestIdPro })
+
+		if (!pro) {
+			return res.json({ result: false, error: "Pas de pro avec cette id" })
+		}
+
+		const proInfo = {
+			idPro: pro._id,
+			firstName: pro.firstName,
+			position: pro.professionalInfo.position,
+			company_name: pro.professionalInfo.company_name
+		}
+
+		if (order.idPro || undefined) {
+			return res.json({ result: true, proInfo: proInfo, error: "L'utilisateur a accepté la commande" })
+		} else {
+			return res.json({ result: false, error: "L'utilisateur n'a pas encore accepté la commande" })
+
+		}
+
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({ result: false, message: 'Erreur lors du check du pro' })
+	}
+})
 
 router.put('/changeIsOnline', async (req, res) => {
 	try {
@@ -298,13 +342,17 @@ router.get('/checkIfOrderRequest/:token', (req, res) => {
 			.then(dataUser => {
 				console.log('dataUser : ', dataUser);
 				if (dataUser && dataUser.professionalInfo.isOnline === true) {
-					// console.log(dataUser.professionalInfo.requestIdOrder);
+					console.log(dataUser.professionalInfo.requestIdOrder !== null || dataUser.professionalInfo.requestIdOrder !== undefined);
+					console.log(dataUser.professionalInfo.requestIdOrder !== null);
+					console.log(dataUser.professionalInfo.requestIdOrder !== undefined);
 					// Si il a reçu une requete est si idOrder n'est pas vide(ça veut dire qu'il n'a pas validé de commande)
-					if (dataUser.professionalInfo.requestIdOrder !== null && dataUser.idOrder == null) {
-						Order.findOne({ _id: dataUser.professionalInfo.requestIdOrder })
+					if ((dataUser.professionalInfo.requestIdOrder !== null || dataUser.professionalInfo.requestIdOrder !== undefined) && dataUser.idOrder == null) {
+						Order.findOne({ _id: dataUser.professionalInfo.requestIdOrder, status: false })
 							.then(dataOrder => {
 
-								// console.log(dataOrder);
+								if (!dataOrder) {
+									return res.json({ result: false, message: "Il n'y a pas encore de commande pour vous" })
+								}
 
 								const allJob = dataOrder.idJob.map(e => {
 									return e.name
@@ -399,33 +447,68 @@ router.post('/acceptOrder/:token', async (req, res) => {
 })
 
 router.get('/isOnOrder/:token', async (req, res) => {
-	const token = req.params.token
-	try {
+	const token = req.params.token;
 
-		const user = await User.findOne({ token: token })
-		console.log('isOnOrder : ', user);
+	// Vérifier si le token est présent
+	if (!token) {
+		return res.status(400).json({ result: false, error: "Le token est manquant" });
+	}
+
+	try {
+		const user = await User.findOne({ token: token });
 
 		if (!user) {
-			res.json({ result: false, error: "L'utilisateur n'a pas été trouvé" })
+			return res.json({ result: false, error: "L'utilisateur n'a pas été trouvé" });
 		}
 
-		const order = await Order.findOne({ _id: user.idOrder, status: false })
+		const order = await Order.findOne({ _id: user.idOrder, status: false });
 
 		if (!order) {
-			res.json({ result: false, error: "L'utilisateur n'a pas de commande ou n'en a pas accepté" })
+			return res.json({ result: false, error: "L'utilisateur n'a pas de commande ou n'en a pas accepté" });
 		} else {
-			res.json({ result: true, order: order })
+			return res.json({ result: true, order: order });
+		}
+	} catch (error) {
+		return res.status(500).json({ result: false, error: error.message });
+	}
+});
 
+router.get('/getUser/:token', async (req, res) => {
+	const token = req.params.token
+	try {
+		console.log('yo');
+		const user = await User.findOne({ token: token })
+
+		if (!user) {
+			res.json({ result: false, error: 'User not find' })
+		} else {
+			const allRating = user.rating.map(rate => {
+				return rate.rate
+			})
+
+			let average = 0;
+
+			for (let i = 0; i < allRating.length; i++) {
+				average += allRating[i]
+			}
+
+			average = average / allRating.length
+
+			if (user.isPro) {
+				res.json({ result: true, firstName: user.firstName, lastName: user.lastName, average: average, money: user.professionalInfo.money })
+			} else {
+				res.json({ result: true, firstName: user.firstName, lastName: user.lastName, average: average })
+			}
 		}
 
-		console.log(order);
-	} catch (error) {
-		res.json({ result: false, error: error })
 
+	} catch (error) {
+		console.log(error);
+		res.json({ result: false, error })
 	}
 })
 
-router.get('/getUser/:idUser', async (req, res) => {
+router.get('/getUserById/:idUser', async (req, res) => {
 	const idUser = req.params.idUser
 	try {
 		console.log('yo');
@@ -434,11 +517,28 @@ router.get('/getUser/:idUser', async (req, res) => {
 		if (!user) {
 			res.json({ result: false, error: 'User not find' })
 		} else {
-			res.json({ result: true, firstName: user.firstName, lastName: user.lastName })
+			const allRating = user.rating.map(rate => {
+				return rate.rate
+			})
+
+			let average = 0;
+
+			for (let i = 0; i < allRating.length; i++) {
+				average += allRating[i]
+			}
+
+			average = average / allRating.length
+
+			if (user.isPro) {
+				res.json({ result: true, firstName: user.firstName, lastName: user.lastName, average: average, money: user.professionalInfo.money })
+			} else {
+				res.json({ result: true, firstName: user.firstName, lastName: user.lastName, average: average })
+			}
 		}
 
 
 	} catch (error) {
+		console.log(error);
 		res.json({ result: false, error })
 	}
 })
@@ -464,6 +564,32 @@ router.put('/refreshLocation/:token', async (req, res) => {
 		res.json({ result: false, error })
 	}
 })
+
+router.get('/getPositionOfPro/:userId', async (req, res) => {
+	try {
+		const user = await User.findById(req.params.userId);
+
+		if (!user) {
+			return res.status(404).json({ error: "Utilisateur non trouvé" });
+		}
+
+		if (!user.isPro) {
+			return res.status(400).json({ error: "Cet utilisateur n'est pas un professionnel" });
+		}
+
+		if (!user.professionalInfo.position) {
+			return res.status(400).json({ error: "La position du professionnel n'est pas définie" });
+		}
+
+		const { latitude, longitude } = user.professionalInfo.position;
+		res.json({ result: true, latitude, longitude });
+	} catch (error) {
+		console.error("Erreur lors de la récupération de la position du professionnel :", error);
+		res.status(500).json({ error: "Erreur interne du serveur" });
+	}
+});
+
+
 
 // router
 module.exports = router;

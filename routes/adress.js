@@ -27,27 +27,31 @@ router.post('/', (req, res) => {
 )
 
 // recuperer lat et la longitude de l'adresse avec son id
-router.get('/:idAddress', (req, res) => {
+router.get('/:idAddress', async (req, res) => {
+    try {
+        console.log(req.params.idAddress);
+        console.log(typeof req.params.idAddress);
+        const data = await Address.findOne({ _id: req.params.idAddress });
 
-    Address.findOne({ _id: req.params.idAddress })
-        .then(async data => {
-            if (data) {
+        if (data) {
+            const apiResponse = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${data.street_number}+${data.street.replaceAll(' ', '+')}&postcode=${data.zip_code}`);
+            const apiResponseJson = await apiResponse.json();
 
-                const apiResponse = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${data.street_number}+${data.street.replaceAll(' ', '+')}&postcode=${data.zip_code}`)
-                const apiResponseJson = await apiResponse.json()
-                // await db.collection('collection').insertOne(apiResponseJson)
-                const longitude = apiResponseJson.features[0].geometry.coordinates[0]
-                const latitude = apiResponseJson.features[0].geometry.coordinates[1]
-                const street = data.street_number + ' ' + data.street
-                res.json({ result: true, longitude, latitude, street });
-            } else {
-                res.json({ result: false, message: "Adresse non trouvée" });
-            }
-        })
-        .catch(error => {
-            console.log(error);
-            res.status(500).json({ error: "Erreur interne du serveur" });
-        });
+            console.log('features : ', apiResponseJson.features[0]);
+
+            const longitude = apiResponseJson.features[0].geometry.coordinates[0];
+            const latitude = apiResponseJson.features[0].geometry.coordinates[1];
+            const street = data.street_number + ' ' + data.street;
+
+            console.log('res: ', { result: true, longitude, latitude, street });
+            res.json({ result: true, longitude, latitude, street });
+        } else {
+            res.json({ result: false, message: "Adresse non trouvée" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
 });
 
 module.exports = router;

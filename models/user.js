@@ -13,7 +13,8 @@ const professionalInfoSchema = mongoose.Schema({
         longitude: Number
     },
     requestIdOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'orders' },
-    rejectedOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'orders' }]
+    rejectedOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'orders' }],
+    money: Number
 });
 
 
