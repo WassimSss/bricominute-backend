@@ -1,10 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-
-var express = require('express');
-var router = express.Router();
-
 const uid2 = require('uid2');
 const jobTask = require('../models/JobTask');
 const JobBranch = require('../models/JobBranch');

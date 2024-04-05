@@ -14,17 +14,14 @@ router.post('/', async (req, res) => {
 		if (!date) {
 			date = new Date();
 		}
-
 		if (token && idJob && idJobTask && date /*&& status && price && IdAddress */) {
 			Users.findOne({ token: token }).then(async (findedUser) => {
 				console.log(findedUser._id);
-
 				if (findedUser) {
 					let price = 0;
 					for (let i = 0; i < idJobTask.length; i++) {
 						price += idJobTask[i].price
 					}
-
 					const newOrders = new orders({
 						idUser: findedUser._id,
 						idJob: idJob,
@@ -35,25 +32,18 @@ router.post('/', async (req, res) => {
 						price: price,
 						IdAddress: '65e5ec8fa7d7b53b75681b38' // Pour l'instant en dur
 					});
-
 					// Enregistre la nouvelle commande
 					const data = await newOrders.save();
-
 					const user = await Users.findOne({ token: token });
-
 					// Si l'utilisateur est trouvé, met à jour isOnService à true, sinon à false
 					if (user) {
 						Users.updateOne({ token: token }, { idOrder: data._id }).then((data) => {
 							console.log('data : ', data);
 						});
-						// console.log(user);
-						// await user.save();
 					} else {
-						// Si l'utilisateur n'est pas trouvé, renvoie une réponse avec isOnService à false
 						res.json({ result: false, message: 'Utilisateur non trouvé' });
 						return;
 					}
-
 					// Renvoie une réponse avec isOnService à true
 					res.json({ result: true, data: data });
 				} else {
@@ -72,9 +62,6 @@ router.post('/', async (req, res) => {
 
 router.get('/getIdAddress/:idOrder', (req, res) => {
 	const idOrder = req.params.idOrder;
-	const test = '65eb3e887942b0cc296213b0';
-	console.log(test == idOrder);
-	console.log(test, idOrder);
 	console.log('params : ', typeof req.params.idOrder);
 	orders
 		.findOne({ _id: idOrder })
@@ -92,7 +79,7 @@ router.get('/getIdAddress/:idOrder', (req, res) => {
 		});
 });
 
-// isProFinded
+
 router.get('/isProFinded/:idOrder', (req, res) => {
 	orders.findOne({ _id: req.params.idOrder }).then((data) => {
 		if (data.idPro) {
@@ -100,8 +87,6 @@ router.get('/isProFinded/:idOrder', (req, res) => {
 		} else {
 			res.json({ result: false });
 		}
-		console.log(data);
-		// if(data)
 	});
 });
 
@@ -120,18 +105,17 @@ router.delete('/delete/:idOrder', async (req, res) => {
 			res.json({ result: false, error: "L'utilisateur n'a pas été trouvé ou n'a pas de commande" })
 		}
 
-		user.idOrder = null; // Supprimer la commande sur le user qui a passé la commande
+		user.idOrder = null;
 		await user.save();
 
 		const pro = await User.findOne({ 'professionalInfo.requestIdOrder': order._id })
 
 		console.log('pro info : ', pro.professionalInfo.requestIdOrder);
-		pro.professionalInfo.requestIdOrder = null; // Supprimer la commande sur le pro qui a potentiellement reçu la commande
+		pro.professionalInfo.requestIdOrder = null;
 
 		await pro.save();
 
-		// if(order.)
-		const deletedOrder = await Order.deleteOne({ _id: idOrder }); // Supprime la commande dans la table order
+		const deletedOrder = await Order.deleteOne({ _id: idOrder });
 
 		if (deletedOrder.deletedCount === 0) {
 			return res.json({ result: false, error: "La commande n'a pas été trouvée ou n'a pas été supprimée" });
@@ -165,9 +149,6 @@ router.put('/proEndOrder/:token', async (req, res) => {
 		}
 
 		const consummer = await User.findOne({ idOrder: order._id })
-
-
-
 
 		if (user._id.toString() !== order.idPro.toString()) {
 			return res.json({ result: false, error: "Vous n'avez pas le droit de mettre fin a cette commande" })
@@ -239,8 +220,6 @@ router.get('/:token', async (req, res) => {
 			};
 		}));
 
-		console.log(ordersMap);
-		console.log(ordersMap);
 		return res.json({ result: true, orders: ordersMap });
 	} catch (error) {
 		console.error("Erreur lors de finalisation de la commande :", error);

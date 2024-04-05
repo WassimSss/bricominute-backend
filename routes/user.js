@@ -102,7 +102,7 @@ router.post('/signup', (req, res) => {
 	});
 });
 
-router.get('/testAlreadyExist/:email', async (req, res) => {
+router.get('/testAlreadyExist/:	email', async (req, res) => {
 	const email = req.params.email
 	try {
 		const user = await User.findOne({ email: email })
@@ -136,8 +136,6 @@ router.post('/signin', (req, res) => {
 });
 
 router.put('/changeIsOnline/:idUser', async (req, res) => {
-
-
 	try {
 		const professionalId = req.params.idUser;
 		const user = await User.findOne({ _id: professionalId });
@@ -176,30 +174,23 @@ router.post('/signin', (req, res) => {
 // Renvoyer l'utilisateur le plus proche de la position
 
 router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) => {
-	// const locationOrder = JSON.parse(req.params.locationOrder); // Convertir en objet JSON
 	const locationOrder = { latitude: req.params.lat, longitude: req.params.long };
 	const idOrder = req.params.idOrder;
 
 	try {
 		// Récupérer tous les utilisateurs en ligne depuis la base de données
 		const usersOnline = await User.find({ 'professionalInfo.isOnline': true });
-		// console.log(usersOnline);
 		let closestUser = null;
 		let minDistance = Infinity;
 
-		// Boucler sur chaque utilisateur
+		// Boucle sur chaque utilisateur
 		usersOnline.forEach((user) => {
-			// console.log(user.professionalInfo.position);
-			// console.log(locationOrder);
 			// Calculer la distance entre l'utilisateur et la position de la commande
 			const distance = geolib.getDistance(user.professionalInfo.position, locationOrder);
 			const distanceInKilometers = geolib.convertDistance(distance, 'km');
 
 			// Mettre à jour l'utilisateur le plus proche
-			// console.log('distanceInKilometers : ', distanceInKilometers);
-			// console.log('isIncludes : ', user.professionalInfo.rejectedOrders.includes(idOrder));
 			if (distance < minDistance && distanceInKilometers && user.professionalInfo.rejectedOrders.includes(idOrder) === false) {
-				// limite a 10km
 				closestUser = user;
 				minDistance = distanceInKilometers;
 			}
@@ -210,24 +201,9 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 			// Upload l'odrer pour ui attribuer le pro trouvé
 			Orders.updateOne({ _id: idOrder }, { requestIdPro: closestUser._id }).then(
 				User.updateOne({ _id: closestUser._id }, { 'professionalInfo.requestIdOrder': idOrder }).then(
-
 					res.json({ result: true, message: `User ${closestUser._id} trouvé, il doit accepter ou refuser la commande` })
-					// Maintenant le pro doit accepter ou non la commande 
-					// User.findOne({ _id: closestUser._id }).then((data) => {
-					// res.json({
-					// 	result: true,
-					// 	test: data,
-					// 	user: {
-					// 		firstName: data.firstName,
-					// 		lastName: data.lastName,
-					// 		company_name: data.company_name
-					// 	} /*userId: closestUser._id, distance: distanceInKilometers */
-					// });
-					// 	})
 				)
 			);
-
-			// Orders.updateOne({ _id: idOrder }, { requestIdPro: closestUser._id });
 		} else {
 			res.json({ message: 'Aucun utilisateur trouvé.' });
 		}
@@ -237,6 +213,7 @@ router.get('/findUserNearbyAndGiveOrder/:lat/:long/:idOrder', async (req, res) =
 	}
 });
 
+// Verifie si le pro a accepter une commande
 router.get('/checkIfProAcceptOrder/:token', async (req, res) => {
 	try {
 		const token = req.params.token
@@ -279,6 +256,7 @@ router.get('/checkIfProAcceptOrder/:token', async (req, res) => {
 	}
 })
 
+// Passe le pro en ligne/hors ligne
 router.put('/changeIsOnline', async (req, res) => {
 	try {
 		const token = req.body.token;
@@ -288,7 +266,6 @@ router.put('/changeIsOnline', async (req, res) => {
 			return res.json({ result: false, error: 'Utilisateur non trouvé' });
 		}
 
-		// console.log(user);
 		// Inverse la valeur de isOnline
 		user.professionalInfo.isOnline = !user.professionalInfo.isOnline;
 		await user.save();
@@ -300,19 +277,17 @@ router.put('/changeIsOnline', async (req, res) => {
 	}
 });
 
-// recuperer la propriete isOnline du pro grace a son id
+// Recupere la propriete isOnline du pro grace a son token
 router.get('/isOnline/:token', async (req, res) => {
 	// Chercher le user
 	const token = req.params.token;
 	try {
 		const user = await User.findOne({ token: token });
 
-		// console.log(user);
 		if (!user) {
 			return res.json({ result: false, error: 'Utilisateur non trouvé' });
 		}
 
-		// console.log(user);
 		res.json({ result: true, isOnline: user.professionalInfo.isOnline });
 	} catch (error) {
 		console.error('Erreur lors de la mise à jour :', error);
@@ -340,11 +315,7 @@ router.get('/checkIfOrderRequest/:token', (req, res) => {
 	try {
 		User.findOne({ token: req.params.token })
 			.then(dataUser => {
-				console.log('dataUser : ', dataUser);
 				if (dataUser && dataUser.professionalInfo.isOnline === true) {
-					console.log(dataUser.professionalInfo.requestIdOrder !== null || dataUser.professionalInfo.requestIdOrder !== undefined);
-					console.log(dataUser.professionalInfo.requestIdOrder !== null);
-					console.log(dataUser.professionalInfo.requestIdOrder !== undefined);
 					// Si il a reçu une requete est si idOrder n'est pas vide(ça veut dire qu'il n'a pas validé de commande)
 					if ((dataUser.professionalInfo.requestIdOrder !== null || dataUser.professionalInfo.requestIdOrder !== undefined) && dataUser.idOrder == null) {
 						Order.findOne({ _id: dataUser.professionalInfo.requestIdOrder, status: false })
@@ -379,7 +350,8 @@ router.get('/checkIfOrderRequest/:token', (req, res) => {
 			}
 			)
 	} catch (error) {
-
+		console.error('Erreur lors de la mise à jour :', error);
+		res.status(500).json({ result: false, error: 'Erreur serveur' });
 	}
 })
 
@@ -446,6 +418,7 @@ router.post('/acceptOrder/:token', async (req, res) => {
 	}
 })
 
+// Savoir si le pro ou le particulier a une commande en cours
 router.get('/isOnOrder/:token', async (req, res) => {
 	const token = req.params.token;
 
@@ -473,6 +446,7 @@ router.get('/isOnOrder/:token', async (req, res) => {
 	}
 });
 
+// Obtenir un user grace a un token
 router.get('/getUser/:token', async (req, res) => {
 	const token = req.params.token
 	try {
@@ -508,6 +482,7 @@ router.get('/getUser/:token', async (req, res) => {
 	}
 })
 
+// Obtenir un user grace a un id
 router.get('/getUserById/:idUser', async (req, res) => {
 	const idUser = req.params.idUser
 	try {
@@ -547,7 +522,6 @@ router.put('/refreshLocation/:token', async (req, res) => {
 	const token = req.params.token
 	const { latitude, longitude } = req.body
 
-	console.log('latitdude : ', latitude, 'longitude: ', longitude);
 	try {
 		const user = await User.findOne({ token: token })
 
@@ -558,9 +532,7 @@ router.put('/refreshLocation/:token', async (req, res) => {
 			res.json({ result: true, message: 'position updated', user: userUpdated })
 		}
 
-
 	} catch (error) {
-		console.log(error);
 		res.json({ result: false, error })
 	}
 })
