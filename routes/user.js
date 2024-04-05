@@ -102,7 +102,7 @@ router.post('/signup', (req, res) => {
 	});
 });
 
-router.get('/testAlreadyExist/:	email', async (req, res) => {
+router.get('/testAlreadyExist/:email', async (req, res) => {
 	const email = req.params.email
 	try {
 		const user = await User.findOne({ email: email })
